@@ -8,7 +8,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        executablePath: "C:\\Program Files\\Google\\Chrome\\Application/chrome.exe"
+        executablePath: "C:\\Users\\Admin\\Desktop\\wp\\chrome\\win64-139.0.7258.66\\chrome-win64\\chrome.exe"
     }
 });
 
@@ -29,7 +29,7 @@ client.on("message", async message => {
                     const buffer = Buffer.from(arrayBuffer);
                     const base64 = buffer.toString('base64');
                     const mimeType = contentType === "application/octet-stream" ? "video/mp4" : contentType;
-                    const messageMedia = new MessageMedia(mimeType, base64);
+                    const messageMedia = new MessageMedia(mimeType, base64)
                     await client.sendMessage(message.from, messageMedia, {sendMediaAsHd: true})
                 }
             } else await client.sendMessage(message.from, error ?? '');
