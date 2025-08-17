@@ -1,14 +1,18 @@
 import qrcode from 'qrcode-terminal';
-import {Client, LocalAuth, MessageMedia,} from 'whatsapp-web.js';
-import {extractUrls} from "./utils";
+import {Client, LocalAuth} from 'whatsapp-web.js';
+import {logMessage, onMessage} from "./utils";
 
-import {downloadMedia} from "./media-downloader";
 
+let lastLink = ''
 const client = new Client({
+
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        executablePath: "C:\\Users\\Admin\\Desktop\\wp\\chrome\\win64-139.0.7258.66\\chrome-win64\\chrome.exe"
+        args: ['--no-sandbox'],
+        executablePath: "C:\\Users\\Admin\\Desktop\\wp\\chrome\\win64-139.0.7258.66\\chrome-win64\\chrome.exe",
+        // executablePath: "/home/miri/WhatsappMediaDownloaderBot/chrome/linux-138.0.7204.184/chrome-linux64/chrome"
+        // executablePath: "/usr/bin/google-chrome"
     }
 });
 
@@ -16,33 +20,38 @@ client.on('qr', qr => {
     qrcode.generate(qr, {small: true});
 });
 
+
 client.on("message", async message => {
-    const url = extractUrls(message.body) || '';
-    if (url.startsWith("https")) {
-        try {
-            const {media, error} = await downloadMedia(url) ?? {media: null, error: ""};
-            if (media) {
-                for (const item of media) {
-                    const file = await fetch(item.download_link);
-                    const contentType = file.headers.get("content-type") ?? '';
-                    const arrayBuffer = await file.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-                    const base64 = buffer.toString('base64');
-                    const mimeType = contentType === "application/octet-stream" ? "video/mp4" : contentType;
-                    const messageMedia = new MessageMedia(mimeType, base64)
-                    await client.sendMessage(message.from, messageMedia, {sendMediaAsHd: true})
-                }
-            } else await client.sendMessage(message.from, error ?? '');
-        } catch (e) {
-            console.log(e)
-        }
-    }
+    if (message.fromMe) return;
+    if (message.body.startsWith("https") && (message.body.includes("tiktok") || message.body.includes("instagram")))
+        lastLink = message.body;
+    await onMessage(client, message)
 });
 
 
 client.on('ready', async () => {
     console.log('WhatsApp Bot Hazır!');
+    const chats = await client.getChats();
+    const onlyPrivateChats = chats.filter(chat => !chat.isGroup && chat.unreadCount > 0)
+    for (const chat of onlyPrivateChats) {
+        const messages = await chat.fetchMessages({limit: chat.unreadCount, fromMe: false});
+        if (messages.length > 0) {
+            for (const message of messages) {
+                if (message.body.startsWith("https") && (message.body.includes("tiktok") || message.body.includes("instagram")))
+                    lastLink = message.body;
+                await onMessage(client, message);
+            }
+        }
+    }
+    console.log("Ready Bitdi")
 });
+client.on('message_create', async message => {
+    if (message.fromMe && lastLink) {
+        const contact = await message.getContact();
+        logMessage(`${contact.name || contact.pushname || contact.number} - Platform: ${lastLink.includes("tiktok") ? "TIKTOK" : "INSTAGRAM"} - URL: ${lastLink} `)
+        lastLink = ''
+    }
+})
 
 client.initialize();
 
