@@ -1,5 +1,4 @@
 import {instagramGetUrl} from "instagram-url-direct";
-import {getTikTokDirectUrl} from "../utils";
 
 const Tiktok = require("@tobyg74/tiktok-api-dl")
 
@@ -25,13 +24,10 @@ export async function downloadMedia(url: string) {
         return {media: instaMedia, error}
     } else if (url.includes("tiktok")) {
         try {
-            const result = await getTikTokDirectUrl(url);
-            console.log(result)
-            // const {result} = await Tiktok.Downloader(url.trim(), {version: "v2"});
-            // const media = result.images ? result.images.map((item: string) => ({
-            //     download_link: item
-            // })) : [{download_link: result.video.playAddr}];
-            // console.log(media)
+            const {result} = await Tiktok.Downloader(url.trim(), {version: "v2"});
+            const media = result.images ? result.images.map((item: string) => ({
+                download_link: item
+            })) : [{download_link: result.video.playAddr}];
             return {media: Array.isArray(media) ? media : [{download_link: media}], error: ""};
         } catch (e) {
             console.log(e);

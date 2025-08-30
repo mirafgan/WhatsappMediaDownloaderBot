@@ -1,17 +1,21 @@
 import fs from 'fs';
 import {type Client, type Message, MessageMedia} from 'whatsapp-web.js';
 import {exec} from 'child_process';
-import {downloadMedia} from "../media-downloader";
+import {downloadMedia} from '../media-downloader';
 import path from "node:path";
 import fetch from "node-fetch";
-import * as cheerio from "cheerio";
 
 export function extractUrls(text: string) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.match(urlRegex)?.[0] || "";
 }
 
-
+enum Lang  {
+    en,
+    ru,
+    tr,
+    az
+}
 // Base64 string'i geçerli base64 formatına indirger
 function cleanBase64(base64String: string) {
     return base64String.replace(/^data:.*;base64,/, '');
@@ -57,26 +61,26 @@ export async function onMessage(client: Client, message: Message) {
     const url = extractUrls(message.body) || '';
 
     // Numara kontrolü
-    let lang = "en";
-    if (message.from.startsWith("994")) lang = "az";
-    else if (message.from.startsWith("90")) lang = "tr";
-    else if (message.from.startsWith("7")) lang = "ru";
+    let lang:Lang = Lang.en;
+    if (message.from.startsWith("994")) lang = Lang.az;
+    else if (message.from.startsWith("90")) lang = Lang.tr;
+    else if (message.from.startsWith("7")) lang = Lang.ru;
 
     // Dil bazlı mesajlar
-    const texts = {
-        az: {
+    const texts:Record<Lang, {sending:string,error:string}> = {
+        [Lang.az]: {
             sending: "Media göndərilir...",
             error: "Media kimi göndərilərkən xəta baş verdi. Fayl kimi göndərilir..."
         },
-        tr: {
+        [Lang.tr]: {
             sending: "Medya gönderiliyor...",
             error: "Medya olarak gönderilirken hata oluştu. Dosya olarak gönderiliyor..."
         },
-        ru: {
+        [Lang.ru]: {
             sending: "Медиа отправляется...",
             error: "Произошла ошибка при отправке медиа. Отправляю как файл..."
         },
-        en: {
+        [Lang.en]: {
             sending: "Sending media...",
             error: "An error occurred while sending media. Sending as a file..."
         }
@@ -124,41 +128,4 @@ export function logMessage(message: string) {
     fs.appendFile(logFile, logLine, (err) => {
         if (err) console.error('Log yazılamadı:', err);
     });
-}
-
-
-/**
- * TikTok video sayfasından MP4 linkini döndürür
- * @param {string} tiktokUrl - TikTok paylaşım linki
- * @returns {Promise<string>} - Direkt indirilebilir MP4 linki
- */
-export async function getTikTokDirectUrl(tiktokUrl: string) {
-    try {
-        // 1. Sayfayı al
-        const res = await fetch(tiktokUrl, {
-            headers: {
-                "User-Agent":
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                    "Chrome/115.0.0.0 Safari/537.36"
-            }
-        });
-        const html = await res.text();
-
-        // 2. HTML içinden JSON verisini bul
-        const $ = cheerio.load(html);
-        const scriptTag = $('script[id="SIGI_STATE"]').html();
-        if (!scriptTag) throw new Error("Video verisi bulunamadı.");
-
-        const json = JSON.parse(scriptTag);
-
-        // 3. JSON içinden video linkini al
-        const videoData = Object.values(json.ItemModule)[0];
-        if (!videoData) throw new Error("Video bilgisi bulunamadı.");
-
-        return videoData.video.downloadAddr;
-    } catch (err) {
-        console.error("Hata:", err.message);
-        return null;
-    }
 }

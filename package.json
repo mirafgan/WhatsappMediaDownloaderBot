@@ -15,6 +15,6 @@
     "@types/qrcode-terminal": "^0.12.2",
     "instagram-url-direct": "^2.0.7",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.31.0"
+    "whatsapp-web.js": "github:BenyFilho/whatsapp-web.js#fix_event_ready"
   }
 }

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
+    "module": "ES2020",
     "target": "esnext",
     "lib": [
       "esnext"

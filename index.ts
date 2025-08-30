@@ -10,8 +10,8 @@ const client = new Client({
     puppeteer: {
         headless: true,
         args: ['--no-sandbox'],
-        executablePath: "C:\\Users\\Admin\\Desktop\\wp\\chrome\\win64-139.0.7258.66\\chrome-win64\\chrome.exe",
-        // executablePath: "/home/miri/WhatsappMediaDownloaderBot/chrome/linux-138.0.7204.184/chrome-linux64/chrome"
+        // executablePath: "C:\\Users\\Mirafgan\\PhpstormProjects\\WhatsappMediaDownloaderBot\\chrome\\win64-139.0.7258.154\\chrome-win64\\chrome.exe",
+        executablePath: "/home/miri/WhatsappMediaDownloaderBot/chrome/linux-138.0.7204.184/chrome-linux64/chrome"
         // executablePath: "/usr/bin/google-chrome"
     }
 });
